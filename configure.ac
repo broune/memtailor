@@ -57,7 +57,7 @@ LT_INIT
 
 dnl Set up AC_OUTPUT to create each file by copying an input file
 dnl while substituting the output variable values.
-AC_CONFIG_FILES([build/autotools/Makefile])
+AC_CONFIG_FILES([Makefile])
 
 dnl Macro that is required to be at the end of any Autoconf script.
 dnl Creates config.status and launches it.
