@@ -1,0 +1,50 @@
+# Maintainer: Oleksandr Motsak <http://goo.gl/mcpzY>
+
+pkgname=memtailor
+pkgver=20120608
+pkgrel=1
+pkgdesc="Custom memory manager. Has an arena allocator and a memory pool."
+arch=(i686 x86_64)
+url="http://www.broune.com/"
+license=('license.txt')
+makedepends=('automake' 'autoconf' 'mercurial')
+checkdepends=('gtest')
+
+_hgname="$pkgname"
+_hgroot="https://bitbucket.org/malex984/$pkgname"
+
+build()
+{
+	cd "$srcdir"
+	msg "Connecting to mercurial server…"
+
+	if [ -d "$srcdir/$_hgname" ]
+	then
+		cd $_hgname && hg pull && cd ..
+	else
+		hg clone $_hgroot
+	fi
+	
+	# setup
+	"./$_hgname/autogen.sh"
+	
+	mkdir -p "BUILD"
+	
+	msg "Starting (out-of-source-tree) build..."
+	
+	cd "BUILD" && ../$_hgname/configure --prefix=/usr && make && cd ..
+}
+
+
+
+package()
+{
+	cd "$srcdir/BUILD"
+	make DESTDIR="${pkgdir}" install
+}
+
+check()
+{
+	cd "$srcdir/BUILD"
+	make check
+}
