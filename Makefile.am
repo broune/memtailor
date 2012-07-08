@@ -29,7 +29,7 @@ memtinclude_HEADERS=src/memtailor/stdinc.h src/memtailor/BufferPool.h	\
 # When making a distribution file, Automake knows to include all files
 # that are necessary to build the project. EXTRA_DIST specifies files
 # to include beyond those used in the build process.
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh libs/gtest
 
 # allow to download gtest in case of needing to run unit tests
 GTEST_DIR = $(top_srcdir)/libs/
@@ -44,10 +44,11 @@ $(GTEST_DIR)/gtest:
 	rm -rf $(GTEST_TMP_DIR)/gtest;
 	(cd $(GTEST_TMP_DIR); \
 	  wget http://googletest.googlecode.com/files/$(GTEST_DOWNLOAD_FILE); \
-	  unzip $(GTEST_DOWNLOAD_FILE);)
+	  unzip $(GTEST_DOWNLOAD_FILE); \
+	  rm $(GTEST_DOWNLOAD_FILE))
 	rm -rf $(GTEST_DIR)/gtest;
 	mv $(GTEST_TMP_DIR)/gtest-$(GTEST_VERSION) $(GTEST_DIR)/gtest;
-.PHONY: gtest
+.PHONY: gtest $(GTEST_DIR)/gtest
 
 TESTS=unittest
 check_PROGRAMS=$(TESTS)
