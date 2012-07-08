@@ -6,25 +6,28 @@ ACLOCAL_AMFLAGS = -I build/autotools/m4
 AM_CPPFLAGS = -I${top_srcdir}/
 
 # tell Libtool what the name of the library is.
-lib_LTLIBRARIES = libmemtailor.la
+lib_LTLIBRARIES = libmemtailor-@MEMTAILOR_API_VERSION@.la
 
 # set the C++ compiler to include src/
 AM_CXXFLAGS=-I$(top_srcdir)/src/
 
-# the sources that are built to make libmemtailor
-libmemtailor_la_SOURCES = src/memtailor/BufferPool.cpp		\
-  src/memtailor/Arena.cpp src/memtailor/MemoryBlocks.cpp
+# the sources that are built to make the library
+libmemtailor_@MEMTAILOR_API_VERSION@_la_SOURCES =		\
+  src/memtailor/BufferPool.cpp src/memtailor/Arena.cpp	\
+  src/memtailor/MemoryBlocks.cpp
 
-# The headers that libmemtailor installs.
-# Normally, automake strips the path from the files when installing them,
-# so src/memtailor/x.h gets installed as just x.h.
-# install memtailor.h directly into the include directory
-include_HEADERS=src/memtailor.h
+# The headers that are installed.
+memtailorA_includedir = $(includedir)/memtailor-$(MEMTAILOR_API_VERSION)
+memtailorA_include_HEADERS = src/memtailor.h
 # install remaining headers into a memtailor subdirectory of the include dir
-memtincludedir=$(includedir)/memtailor
-memtinclude_HEADERS=src/memtailor/stdinc.h src/memtailor/BufferPool.h	\
-  src/memtailor/Arena.h src/memtailor/ArenaVector.h						\
-  src/memtailor/MemoryBlocks.h
+memtailorB_includedir = \
+  $(includedir)/memtailor-$(MEMTAILOR_API_VERSION)/memtailor
+memtailorB_include_HEADERS = src/memtailor/stdinc.h			\
+  src/memtailor/BufferPool.h src/memtailor/Arena.h			\
+  src/memtailor/ArenaVector.h src/memtailor/MemoryBlocks.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = build/autotools/memtailor-$(MEMTAILOR_API_VERSION).pc
 
 # When making a distribution file, Automake knows to include all files
 # that are necessary to build the project. EXTRA_DIST specifies files
@@ -57,7 +60,7 @@ unittest_CXXFLAGS=\
   -I$(top_srcdir)/libs/gtest/include\
   -I$(top_srcdir)/libs/gtest/\
   -I$(top_srcdir)/src/
-unittest_LDFLAGS=$(top_builddir)/libmemtailor.la
+unittest_LDFLAGS = $(top_builddir)/libmemtailor-$(MEMTAILOR_API_VERSION).la
 
 # test_LIBS=
 unittest_SOURCES=src/test/ArenaTest.cpp src/test/BufferPoolTest.cpp	\
