@@ -112,6 +112,11 @@ TEST(Arena, BigAndOverflow) {
   ASSERT_TRUE(arena.isEmpty());
 }
 
+// Make a class that keeps track of constructions and destructions in
+// a global string. MAKE_HELPER will make a separate instantiation for
+// every test so the tests are still independent in spite of the use
+// of global variables. This is also thread safe as long as two
+// threads are not running the same test at the same time.
 namespace {
   template<class T, size_t ThrowAt>
   class _frobby_Helper {
@@ -131,7 +136,13 @@ namespace {
 
     void setId(size_t id) {_id = id;}
 
-    static std::string getLog() {return _log.str();}
+    static std::string resetLog() {
+	  std::string log = _log.str();
+	  _log.clear();
+	  _log.str("");
+	  _count = 0;
+	  return log;
+	}
 
   private:
     size_t _id;
@@ -157,7 +168,7 @@ TEST(Arena, ConDecon) {
   arena.freeTopArray(arena.allocArray<ConDeconHelper>(0));
   arena.freeTopArray(arena.allocArray<ConDeconHelper>(3));
   arena.freeTopArray(arena.allocArray<ConDeconHelper>(0));
-  ASSERT_EQ(ConDeconHelper::getLog(), "+1+2+3-3-2-1");
+  ASSERT_EQ(ConDeconHelper::resetLog(), "+1+2+3-3-2-1");
   ASSERT_TRUE(arena.isEmpty());
 }
 
@@ -165,7 +176,7 @@ MAKE_HELPER(ConExcep, 4)
 TEST(Arena, ConExcep) {
   memt::Arena arena;
   ASSERT_THROW(arena.allocArray<ConExcepHelper>(10), size_t);
-  ASSERT_EQ(ConExcepHelper::getLog(), "+1+2+3T4-3-2-1");
+  ASSERT_EQ(ConExcepHelper::resetLog(), "+1+2+3T4-3-2-1");
   ASSERT_TRUE(arena.isEmpty());
 }
 
@@ -179,7 +190,7 @@ TEST(Arena, NoConDecon) {
   p.first[2].setId(3);
   arena.freeTopArray(p);
 
-  ASSERT_EQ(NoConDeconHelper::getLog(), "-3-2-1");
+  ASSERT_EQ(NoConDeconHelper::resetLog(), "-3-2-1");
   ASSERT_TRUE(arena.isEmpty());
 }
 
@@ -187,6 +198,78 @@ MAKE_HELPER(ConNoDecon, 0)
 TEST(Arena, ConNoDecon) {
   memt::Arena arena;
   arena.freeTop(arena.allocArray<ConNoDeconHelper>(3).first);
-  ASSERT_EQ(ConNoDeconHelper::getLog(), "+1+2+3");
+  ASSERT_EQ(ConNoDeconHelper::resetLog(), "+1+2+3");
   ASSERT_TRUE(arena.isEmpty());
+}
+
+MAKE_HELPER(PtrNoConNoDecon, 0)
+TEST(Arena, PtrNoConNoDecon) {
+  memt::Arena arena;
+  ASSERT_TRUE(arena.isEmpty());
+  {
+	memt::Arena::PtrNoConNoDecon<PtrNoConNoDeconHelper> ptr1(arena);
+	ASSERT_FALSE(arena.isEmpty());
+	memt::Arena::PtrNoConNoDecon<PtrNoConNoDeconHelper> ptr2(arena);
+	memt::Arena::PtrNoConNoDecon<PtrNoConNoDeconHelper> ptr3(arena);
+	memt::Arena::PtrNoConNoDecon<PtrNoConNoDeconHelper> ptr4(arena);
+	ASSERT_FALSE(arena.isEmpty());
+  }
+  ASSERT_TRUE(arena.isEmpty());
+  ASSERT_EQ(PtrNoConNoDeconHelper::resetLog(), "");
+}
+
+TEST(Arena, Guard) {
+  memt::Arena arena;
+  {
+	memt::Arena::Guard noop(arena); // no-op guard
+  }
+
+  {
+	// double no-op guard
+	memt::Arena::Guard guard1(arena);
+	memt::Arena::Guard guard2(arena);
+  }
+
+
+  // guard for empty arena with no allocations on it ever
+  memt::Arena::Guard emptyGuard(arena);
+  arena.freeTop(arena.alloc(10000));
+  // guard for empty arena which has allocated some memory previously
+  memt::Arena::Guard emptyGuard2(arena);
+  // memory use is exponential in number of iterations so do not
+  // increase too much.
+  void* fromIteration3 = 0;
+  for (size_t i = 0; i < 6u; ++i) {
+	if (i == 3)
+	  fromIteration3 = arena.alloc(1);
+	{
+	  memt::Arena::Guard noop(arena); // no-op guard
+	}
+	void* tmp;
+	{
+	  memt::Arena::Guard g1(arena);
+	  {
+		memt::Arena::Guard g2(arena);
+		tmp = arena.alloc(1);
+  	    ASSERT_TRUE(arena.fromArena(tmp));
+		g2.release();
+	  }
+      ASSERT_TRUE(arena.fromArena(tmp)); // released guard did not free
+	  memt::Arena::Guard g3(arena);
+	  memt::Arena::Guard g4(arena);
+	  memt::Arena::Guard g5(arena);
+	  memt::Arena::Guard g6(arena);
+	  g6.release();
+	  g3.release();
+	  ASSERT_TRUE(arena.fromArena(tmp));
+	}
+	ASSERT_FALSE(arena.fromArena(tmp)); // freed despite some guards freed
+	// allocate enough memory to force a new block of backing memory
+	// inside the arena.
+	arena.alloc(arena.getMemoryUse());
+  }
+  // free a middle allocation to force some blocks to go away
+  ASSERT_TRUE(fromIteration3 != 0);
+  ASSERT_TRUE(arena.fromArena(fromIteration3));
+  arena.freeAndAllAfter(fromIteration3);
 }

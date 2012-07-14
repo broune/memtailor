@@ -97,7 +97,7 @@ TEST(MemoryBlocks, Properties) {
   for (size_t i = 100; i > 0; --i) {
     ASSERT_TRUE(blocks.getFrontBlock().hasPreviousBlock());
     memt::MemoryBlocks::Block* previous =
-	  blocks.getFrontBlock().getPreviousBlock();
+	  blocks.getFrontBlock().previousBlock();
     for (const char* it = previous->begin(); it != previous->end(); ++it)
       ASSERT_EQ(*it, static_cast<char>(i - 1));
     ASSERT_EQ(previous->getBytesInBlock(), i - 1);
@@ -107,9 +107,9 @@ TEST(MemoryBlocks, Properties) {
   ASSERT_EQ(blocks.getFrontBlock().getBytesInBlock(), 100u);
 
   blocks.allocBlock(101);
-  ASSERT_EQ(blocks.getFrontBlock().getPreviousBlock()->getBytesInBlock(), 100u);
+  ASSERT_EQ(blocks.getFrontBlock().previousBlock()->getBytesInBlock(), 100u);
   blocks.allocBlock(102);
-  ASSERT_EQ(blocks.getFrontBlock().getPreviousBlock()->getBytesInBlock(), 101u);
+  ASSERT_EQ(blocks.getFrontBlock().previousBlock()->getBytesInBlock(), 101u);
 
   blocks.freeAllPreviousBlocks();
   ASSERT_FALSE(blocks.getFrontBlock().isNull());

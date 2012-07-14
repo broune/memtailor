@@ -110,10 +110,10 @@ namespace memt {
       /** Returns true if position() == begin(). */
       bool empty() const {return position() == begin();}
 
-      Block* getPreviousBlock() {return _previous;}
-      Block const* getPreviousBlock() const {return _previous;}
+      Block* previousBlock() {return _previous;}
+      Block const* previousBlock() const {return _previous;}
 
-      /** Returns true if previous() is not null. */
+      /** Returns true if previousBlock() is not null. */
       bool hasPreviousBlock() const {return _previous != 0;}
 
       /** Returns true this is a null block object. That is, if begin(),

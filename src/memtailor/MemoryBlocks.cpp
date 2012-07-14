@@ -21,7 +21,7 @@ namespace memt {
       // space to store the block for the old memory.
       const size_t blockStructOffset = alignNoOverflow(getBytesInBlock());
       Block* block = reinterpret_cast<Block*>(begin() + blockStructOffset);
-      block->_previous = this->getPreviousBlock();
+      block->_previous = this->previousBlock();
       block->_begin = begin();
       block->_end = end();
       block->_position = position();
@@ -48,7 +48,7 @@ namespace memt {
     const Block* block = &_block;
     do {
       sum += block->getBytesInBlock();
-      block = block->getPreviousBlock();
+      block = block->previousBlock();
     } while (block != 0);
     return sum;
   }
@@ -58,7 +58,7 @@ namespace memt {
     const Block* block = &_block;
     do {
       sum += block->getBytesToLeft();
-      block = block->getPreviousBlock();
+      block = block->previousBlock();
     } while (block != 0);
     return sum;
   }
@@ -72,8 +72,8 @@ namespace memt {
 
   void MemoryBlocks::Block::freePrevious() {
     MEMT_ASSERT(hasPreviousBlock());
-    Block* previousPrevious = getPreviousBlock()->getPreviousBlock();
-    getPreviousBlock()->free();
+    Block* previousPrevious = previousBlock()->previousBlock();
+    previousBlock()->free();
     _previous = previousPrevious;
   }
 
@@ -84,7 +84,7 @@ namespace memt {
     do {
 	  if (block->isInBlock(ptr))
 		return block;
-      block = block->getPreviousBlock();
+      block = block->previousBlock();
     } while (block != 0);
     return 0;
   }

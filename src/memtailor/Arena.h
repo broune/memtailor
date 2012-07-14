@@ -78,7 +78,7 @@ namespace memt {
     /** Allocates and default constructs an instance of T.
         Only default construction supported. */
     template<class T>
-      T* allocObject() {
+	T* allocObject() {
       return new (allocObjectNoCon<T>()) T();
     }
 
@@ -94,7 +94,7 @@ namespace memt {
         this Arena that has not yet been freed. Double frees are not
         allowed. ptr must not be null. */
     template<class T>
-      void freeTopObject(T* ptr) {
+	void freeTopObject(T* ptr) {
       ptr->~T();
       freeTop(ptr);
     }
@@ -103,7 +103,7 @@ namespace memt {
         along with all not yet freed allocations that have happened
         since that buffer was allocated. ptr must not be null. */
     template<class T>
-      void freeObjectAndAllAfter(T* ptr) {
+	void freeObjectAndAllAfter(T* ptr) {
       ptr->~T();
       freeAndAllAfter(ptr);
     }
@@ -113,14 +113,14 @@ namespace memt {
     /** As alloc(elementCount * sizeof(T)). Constructors for the
         elements of the array are not called. */
     template<class T>
-      std::pair<T*, T*> allocArrayNoCon(size_t elementCount);
+	std::pair<T*, T*> allocArrayNoCon(size_t elementCount);
 
     /** As allocArrayNoCon except that constructors for the elements of
         the array are called. The constructors are called in increasing
         order of index. Constructed objects are destructed in reverse
         order if a constructor throws an exception. */
     template<class T>
-      std::pair<T*, T*> allocArray(size_t elementCount);
+	std::pair<T*, T*> allocArray(size_t elementCount);
 
     /** As freeTop(array) except that the elements of the array in the
         range (array, arrayEnd] are deconstructed in decreasing order of
@@ -128,25 +128,82 @@ namespace memt {
 
         array and arrayEnd must not be zero. */
     template<class T>
-      void freeTopArray(T* array, T* arrayEnd);
+	void freeTopArray(T* array, T* arrayEnd);
 
     /** As freeTopArray(p.first, p.second). */
     template<class T>
-      void freeTopArray(std::pair<T*, T*> p) {freeTopArray(p.first, p.second);}
+	void freeTopArray(std::pair<T*, T*> p) {freeTopArray(p.first, p.second);}
 
     /** As freeAndAllAfter(array) except that the elements of the array
         in the range (array, arrayEnd] are deconstructed in decreasing
         order of index. The destructors must not throw exceptions. */
     template<class T>
-      void freeArrayAndAllAfter(T* array, T* arrayEnd);
+	void freeArrayAndAllAfter(T* array, T* arrayEnd);
 
     /** As freeTopArrayAndAllAfter(p.first, p.second). */
     template<class T>
-      void freeArrayAndAllAfter(std::pair<T*, T*> p) {
+	void freeArrayAndAllAfter(std::pair<T*, T*> p) {
       freeArrayAndAllAfter(p.first, p.second);
     }
 
+	// ***** RAII handles *****
+	// These would work much better with the features of C++11
+	// but C++11 is not yet available everywhere.
+
+	template<class T>
+	class PtrNoConNoDecon {
+	public:
+	  PtrNoConNoDecon(Arena& arena):
+		mArena(arena),
+		mPtr(arena.allocObjectNoCon<T>()) {}
+	  ~PtrNoConNoDecon() {mArena.freeTop(mPtr);}
+
+	  T* operator->() {return mPtr;}
+	  T const* operator->() const {return mPtr;}
+	  T* get() {return mPtr;}
+	  T const* get() const {return mPtr;}
+	  T& operator*() {return *mPtr;}
+	  T const& operator*() const {return *mPtr;}
+
+	private:
+	  PtrNoConNoDecon(const PtrNoConNoDecon&); // not available
+	  void operator=(const PtrNoConNoDecon&); // not available
+
+	  Arena& mArena;
+	  T* const mPtr;
+	};
+
+	// In the destructor, frees all allocations made since the
+	// constructor unless the guard has been released. The most recent
+	// allocation at the point of the constructor must not have been
+	// freed at the point of the destructor -- this restriction only
+	// applies if the guard has not been released.
+	class Guard {
+	public:
+	  Guard(Arena& arena): mArena(&arena), mPosition(arena.guardPoint()) {}
+	  ~Guard() {
+		if (mArena != 0)
+		  mArena->restoreToGuardPoint(mPosition);
+	  }
+	  void release() {mArena = 0;}
+
+	private:
+	  Arena* mArena; // guard has been released if null
+	  void* mPosition;
+	};
+
     // ***** Miscellaneous *****
+
+	/** Returns true if ptr is within the range of any memory buffer
+		that has been allocated from this arena and that has not yet
+		been deallocated. Pointers that are one-past-the-end of an
+		allocated buffer are not within the range, but they may be
+		inside a subsequent buffer and so may still yield a return
+		value of true. Also, the allocated range may be larger than
+		requested due to alignment in which case the pointer that is
+		one-past-the-end would be inside the range. This method is
+		useful for debugging and testing. */
+	bool fromArena(void const* ptr);
 
     /** Returns true if there are no live allocations for this Arena. */
     inline bool isEmpty() const;
@@ -186,9 +243,18 @@ namespace memt {
     /** As freeAndAllAfter where ptr was allocated from an old block. */
     void freeAndAllAfterFromOldBlock(void* ptr);
 
+	/** Obtain current state so that it can be restored later. The
+		guard point is invalidated if the most recent allocation at the
+		point this method is called is freed. */
+    void* guardPoint();
+
+	/** As freeAndAllAfter except that there need not be an allocation 
+		of ptr - it is just a position that the arena had in the past. */
+	void restoreToGuardPoint(void* ptr);
+
     MemoryBlocks _blocks;
 #ifdef MEMT_DEBUG
-    std::vector<void*> _debugAllocs;
+    std::vector<void const*> _debugAllocs;
 #endif
 
     static Arena _scratchArena;
@@ -261,7 +327,7 @@ namespace memt {
   }
 
   template<class T>
-    std::pair<T*, T*> Arena::allocArrayNoCon(size_t elementCount) {
+  std::pair<T*, T*> Arena::allocArrayNoCon(size_t elementCount) {
     if (elementCount > static_cast<size_t>(-1) / sizeof(T))
       throw std::bad_alloc();
     const size_t size = elementCount * sizeof(T);
@@ -273,7 +339,7 @@ namespace memt {
   }
 
   template<class T>
-    std::pair<T*, T*> Arena::allocArray(size_t elementCount) {
+  std::pair<T*, T*> Arena::allocArray(size_t elementCount) {
     std::pair<T*, T*> p = allocArrayNoCon<T>(elementCount);
     T* it = p.first;
     try {
@@ -288,7 +354,7 @@ namespace memt {
   }
 
   template<class T>
-    void Arena::freeTopArray(T* array, T* arrayEnd) {
+  void Arena::freeTopArray(T* array, T* arrayEnd) {
     MEMT_ASSERT(array != 0);
     MEMT_ASSERT(array <= arrayEnd);
 
@@ -300,7 +366,7 @@ namespace memt {
   }
 
   template<class T>
-    void Arena::freeArrayAndAllAfter(T* array, T* arrayEnd) {
+  void Arena::freeArrayAndAllAfter(T* array, T* arrayEnd) {
     MEMT_ASSERT(array != 0);
     MEMT_ASSERT(array <= arrayEnd);
 
@@ -309,6 +375,79 @@ namespace memt {
       arrayEnd->~T();
     }
     freeAndAllAfter(array);
+  }
+
+  inline void* Arena::guardPoint() {
+	// Supporting guard points is significantly more tricky than it
+	// may at first seem. Do not alter guardPoint() and
+	// restoreToGuardPoint() unless you are certain you understand the
+	// code completely and have carefully considered the change.
+	//
+	// We cannot allow the guard point to be inside an empty block
+	// since such blocks can be deallocated and that memory could then
+	// potentially be somewhere inside a later-allocated block. This
+	// problem does not appear for a non-empty block because the guard
+	// point is invalidated if any of the allocations in that block
+	// are later freed.
+
+	if (!block().empty()) {
+	  MEMT_ASSERT(!_debugAllocs.empty());
+	  MEMT_ASSERT(block().isInBlock(_debugAllocs.back()));
+	  MEMT_ASSERT(_debugAllocs.back() < block().position());
+	  return block().position(); // no problems in this case
+	}
+
+	if (block().hasPreviousBlock()) {
+	  // The previous block is not empty as then it would have been
+	  // deallocated, so it is safe to take the guard point from the
+	  // previous block.
+	  MEMT_ASSERT(!block().previousBlock()->empty());
+	  MEMT_ASSERT(!_debugAllocs.empty());
+	  MEMT_ASSERT(block().previousBlock()->isInBlock(_debugAllocs.back()));
+	  MEMT_ASSERT(_debugAllocs.back() < block().previousBlock()->position());
+	  return block().previousBlock()->position();
+	} else {
+	  // Here the arena is empty, so there is no non-empty block.
+	  MEMT_ASSERT(isEmpty());
+	  MEMT_ASSERT(_debugAllocs.empty());
+	  // Return null to indicate empty arena.
+	  return 0;
+	}
+  }
+
+  inline void Arena::restoreToGuardPoint(void* ptr) {
+	if (ptr == static_cast<void const*>(0)) { // null indicates empty arena
+	  freeAllAllocs();
+	  return;
+	}
+
+	Block* b = &block();
+	while (!(b->begin() < ptr && ptr <= b->end())) {
+	  b->setPosition(b->begin());
+	  b = b->previousBlock();
+
+	  // If you get an assert here then most likely the guard point was
+	  // invalidated by deallocating memory that was live at the point
+	  // the guard point was created.
+	  MEMT_ASSERT(b != 0);
+	}
+ 	MEMT_ASSERT(b->begin() < ptr && ptr <= b->end());
+	b->setPosition(ptr);
+
+#ifdef MEMT_DEBUG // update _debugAllocs
+	// there is always at least one allocation in the block of the
+	// guard ptr, so _debugAllocs will have a pointer in that block.
+	while (!_debugAllocs.empty() && !b->isInBlock(_debugAllocs.back()))
+	  _debugAllocs.pop_back();
+	MEMT_ASSERT(!_debugAllocs.empty());	
+	while (!_debugAllocs.empty() && _debugAllocs.back() >= ptr) {
+	  MEMT_ASSERT(b->isInBlock(_debugAllocs.back()));
+	  _debugAllocs.pop_back();
+	}
+	MEMT_ASSERT(!_debugAllocs.empty());
+	MEMT_ASSERT(b->isInBlock(_debugAllocs.back()));
+	MEMT_ASSERT(_debugAllocs.back() < ptr);	
+#endif
   }
 }
 
