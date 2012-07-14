@@ -8,8 +8,8 @@
 #error Both MEMT_DEBUG and MEMT_NDEBUG defined
 #endif
 
-// If MemTailor has not been instructed to enable or disable
-// debugging specifically, inherit behaviro based on DEBUG
+// If MemTailor has not been instructed to enable or disable debugging
+// specifically, inherit behavior based on DEBUG
 #if (!defined MEMT_DEBUG) && (!defined MEMT_NDEBUG)
 #if (defined DEBUG) || (defined _DEBUG)
 #define MEMT_DEBUG
@@ -23,12 +23,12 @@
 #define MEMT_ASSERT(X)
 #endif
 
-/// The alignment that memory allocators must ensure. In other words
-/// allocators must return pointer addresses that are divisible by
-/// MemoryAlignment. MemoryAlignment must be a power of 2.
-
 namespace memt {
+  /// The alignment that memory allocators must ensure. In other words
+  /// allocators must return pointer addresses that are divisible by
+  /// MemoryAlignment. MemoryAlignment must be a power of 2.
   static const unsigned int MemoryAlignment = sizeof(void*);
+
   static const unsigned int BitsPerByte = 8;
 }
 
