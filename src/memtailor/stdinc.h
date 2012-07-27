@@ -8,14 +8,6 @@
 #error Both MEMT_DEBUG and MEMT_NDEBUG defined
 #endif
 
-// If MemTailor has not been instructed to enable or disable debugging
-// specifically, inherit behavior based on DEBUG
-#if (!defined MEMT_DEBUG) && (!defined MEMT_NDEBUG)
-#if (defined DEBUG) || (defined _DEBUG)
-#define MEMT_DEBUG
-#endif
-#endif
-
 #ifdef MEMT_DEBUG
 #include <cassert>
 #define MEMT_ASSERT(X) assert(X)
