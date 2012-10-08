@@ -229,6 +229,9 @@ namespace memt {
     static Arena& getArena() {return _scratchArena;}
 
   private:
+    Arena(const Arena&); // not available
+    void operator=(Arena&); // not available
+
     typedef MemoryBlocks::Block Block;
     Block& block() {return _blocks.getFrontBlock();}
     const Block& block() const {return _blocks.getFrontBlock();}

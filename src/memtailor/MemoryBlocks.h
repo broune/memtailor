@@ -4,8 +4,8 @@
 #define MEMT_MEMORY_BLOCKS_GUARD
 
 #include "stdinc.h"
-#include <new>
 #include <cstddef>
+#include <memory>
 
 namespace memt {
   /** Handles a linked list of blocks of memory. Intended for use in
@@ -150,6 +150,9 @@ namespace memt {
     };
 
   private:
+    MemoryBlocks(const MemoryBlocks&); // not available
+    void operator=(const MemoryBlocks&); // not available
+
     Block _block;
   };
 
