@@ -27,3 +27,18 @@ Makefile.in
 Makefile
 configure
 .libs/
+
+# Visual studio generated files
+*.suo
+*.sdf
+*.opensdf
+intermediate/
+output/
+
+# Configure build targets
+deb/
+debnoass/
+pro/
+rel/
+relass/
+
