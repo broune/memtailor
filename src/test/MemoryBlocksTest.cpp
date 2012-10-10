@@ -66,7 +66,7 @@ TEST(MemoryBlocks, Properties) {
   ASSERT_TRUE(blocks.getFrontBlock().isNull());
   for (size_t i = 0; i <= 100; ++i) {
     memt::MemoryBlocks::Block& block = blocks.allocBlock(i);
-    std::fill(block.begin(), block.end(), i);
+    std::fill(block.begin(), block.end(), static_cast<char>(i));
     ASSERT_EQ(&block, &blocks.getFrontBlock());
     ASSERT_FALSE(block.isNull());
     ASSERT_EQ(block.position(), block.begin());
