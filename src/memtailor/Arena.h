@@ -394,9 +394,9 @@ namespace memt {
 	// are later freed.
 
 	if (!block().empty()) {
-	  MEMT_ASSERT(!_debugAllocs.empty());
-	  MEMT_ASSERT(block().isInBlock(_debugAllocs.back()));
-	  MEMT_ASSERT(_debugAllocs.back() < block().position());
+	  MEMT_ASSERT_NO_ASSUME(!_debugAllocs.empty());
+	  MEMT_ASSERT_NO_ASSUME(block().isInBlock(_debugAllocs.back()));
+	  MEMT_ASSERT_NO_ASSUME(_debugAllocs.back() < block().position());
 	  return block().position(); // no problems in this case
 	}
 
@@ -405,14 +405,16 @@ namespace memt {
 	  // deallocated, so it is safe to take the guard point from the
 	  // previous block.
 	  MEMT_ASSERT(!block().previousBlock()->empty());
-	  MEMT_ASSERT(!_debugAllocs.empty());
-	  MEMT_ASSERT(block().previousBlock()->isInBlock(_debugAllocs.back()));
-	  MEMT_ASSERT(_debugAllocs.back() < block().previousBlock()->position());
+	  MEMT_ASSERT_NO_ASSUME(!_debugAllocs.empty());
+	  MEMT_ASSERT_NO_ASSUME
+        (block().previousBlock()->isInBlock(_debugAllocs.back()));
+	  MEMT_ASSERT_NO_ASSUME
+        (_debugAllocs.back() < block().previousBlock()->position());
 	  return block().previousBlock()->position();
 	} else {
 	  // Here the arena is empty, so there is no non-empty block.
 	  MEMT_ASSERT(isEmpty());
-	  MEMT_ASSERT(_debugAllocs.empty());
+	  MEMT_ASSERT_NO_ASSUME(_debugAllocs.empty());
 	  // Return null to indicate empty arena.
 	  return 0;
 	}
