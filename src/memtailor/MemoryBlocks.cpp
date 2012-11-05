@@ -63,13 +63,6 @@ namespace memt {
     return sum;
   }
 
-  void MemoryBlocks::Block::makeNull() {
-    _previous = 0;
-    _begin = 0;
-    _position = 0;
-    _end = 0;
-  }
-
   void MemoryBlocks::Block::freePrevious() {
     MEMT_ASSERT(hasPreviousBlock());
     Block* previousPrevious = previousBlock()->previousBlock();

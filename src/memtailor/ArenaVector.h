@@ -40,7 +40,7 @@ namespace memt {
     const T* end() const {return _end;}
 
     void push_back(const T& t) {
-      MEMT_ASSERT(_end != _capacityEndDebug);
+      MEMT_ASSERT_NO_ASSUME(_end != _capacityEndDebug);
       new (_end) T(t);
       ++_end;
     }

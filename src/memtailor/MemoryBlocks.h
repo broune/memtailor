@@ -14,6 +14,10 @@ namespace memt {
   public:
     class Block;
 
+    /// Moves ownership of data and leaves the parameter in a
+    /// valid empty state.
+    MemoryBlocks(MemoryBlocks&& blocks);
+
     /** Makes the front block a null block object. No memory is
         allocated. */
     MemoryBlocks() {}
@@ -125,13 +129,28 @@ namespace memt {
 
     private:
       friend class MemoryBlocks;
+
+      /// Moves ownership of memory and leaves block in a valid null state.
+      Block(Block&& block):
+        _begin(block._begin),
+        _position(block._position),
+        _end(block._end),
+        _previous(block._previous) {
+        block.makeNull();
+      }
+
       Block() {makeNull();}
       Block(size_t capacity, Block* previous);
       Block(Block const&); // unavailable
       void operator=(Block const&); // unavailable
 
-      /** Makes this a null block object. Does NOT free the owned memory! */
-      void makeNull();
+      /// Makes this a null block object. Does NOT free the owned memory!
+      void makeNull() {
+        _previous = 0;
+        _begin = 0;
+        _position = 0;
+        _end = 0;
+      }
 
       /** Frees the memory for this block. */
       void free() {delete[] begin();}
@@ -155,6 +174,9 @@ namespace memt {
 
     Block _block;
   };
+
+  inline MemoryBlocks::MemoryBlocks(MemoryBlocks&& blocks):
+    _block(std::move(blocks._block)) {}
 
   inline MemoryBlocks::Block& MemoryBlocks::allocBlock(size_t capacityInBytes) {
     _block.newBlock(capacityInBytes);

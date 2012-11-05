@@ -13,6 +13,8 @@ namespace memt {
       the buffer pool is destructed. */
   class BufferPool {
   public:
+    BufferPool(BufferPool&& pool);
+
     /** bufferSize is how many bytes are returned by each call to alloc. */
     BufferPool(size_t bufferSize);
 
@@ -84,6 +86,14 @@ namespace memt {
     FreeNode* _free; /// null indicates that the free list is empty
     MemoryBlocks _blocks; /// internal backing memory
   };
+
+  inline BufferPool::BufferPool(BufferPool&& pool):
+    _bufferSize(pool._bufferSize),
+    _free(pool._free),
+    _blocks(std::move(pool._blocks))
+  {
+    pool._free = 0;
+  }
 
   inline void* BufferPool::alloc() {
     void* ptr;
