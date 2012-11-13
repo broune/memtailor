@@ -70,6 +70,9 @@ namespace memt {
 	bool fromPool(const void* ptr) const;
 
   private:
+    BufferPool(const BufferPool&); // not available
+    void operator=(const BufferPool&); // not available
+
     typedef MemoryBlocks::Block Block;
     Block& block() {return _blocks.getFrontBlock();}
     const Block& block() const {return _blocks.getFrontBlock();}

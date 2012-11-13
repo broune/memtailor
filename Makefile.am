@@ -9,7 +9,7 @@ AM_CPPFLAGS = -I${top_srcdir}/
 lib_LTLIBRARIES = libmemtailor-@MEMTAILOR_API_VERSION@.la
 
 # set the C++ compiler to include src/
-AM_CXXFLAGS=-I$(top_srcdir)/src/
+AM_CXXFLAGS=-I$(top_srcdir)/src/ -std=gnu++0x
 
 # the sources that are built to make the library
 libmemtailor_@MEMTAILOR_API_VERSION@_la_SOURCES =		\
@@ -40,7 +40,7 @@ check_PROGRAMS=$(TESTS)
 unittest_CXXFLAGS=\
   -I$(top_srcdir)/libs/gtest/include\
   -I$(top_srcdir)/libs/gtest/\
-  -I$(top_srcdir)/src/
+  -I$(top_srcdir)/src/ -std=gnu++0x
 unittest_LDFLAGS = $(top_builddir)/libmemtailor-$(MEMTAILOR_API_VERSION).la
 
 # test_LIBS=
