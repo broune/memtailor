@@ -8,5 +8,5 @@ Description: C++ library of special purpose memory allocators.
 URL: https://github.com/broune/memtailor
 Requires:
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lmemtailor-@MEMTAILOR_API_VERSION@
-Cflags: -I${includedir}/memtailor-@MEMTAILOR_API_VERSION@
+Libs: -L${libdir} -lmemtailor
+Cflags: -I${includedir}/memtailor/
