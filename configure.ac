@@ -10,6 +10,48 @@ dnl  if autoconf is told the source code is in a directory that does not
 dnl  contain this file then it knows that the directory is wrong.
 AC_CONFIG_SRCDIR([src/memtailor.h])
 
+dnl ----- The gtest dependency
+
+AC_ARG_WITH([gtest], AS_HELP_STRING(
+    [--with-gtest], [use gtest, which is required for running the unit tests
+      with make check. The value download, which is the default, downloads
+      gtest if a gtest source directory cannot be found. Per the recommendation
+      of the gtest documentation, gtest is compiled with the tests, so an
+      installed gtest is not usable - you need the gtest source. GTEST_PATH
+      indicates where to look for gtest and it is also where GTEST_PATH
+      will be downloaded to if not found. The default path is \$srcdir/libs so
+      that gtest needs to be at \$srcdir/libs/gtest/ where \$srcdir is the
+      directory that contains configure.ac.]
+))
+
+AC_MSG_CHECKING([for gtest])
+AS_IF([test "x$GTEST_PATH" == "x"], [GTEST_PATH="$srcdir/libs"])
+AS_IF([test "x$GTEST_VERSION" == "x"], [GTEST_VERSION="1.6.0"])
+AS_IF([test "x$with_gtest" == "x"], [with_gtest="download"])
+
+AS_IF([test "x$with_gtest" == "xdownload"],
+  [with_gtest="yes"; AC_CHECK_FILE([$GTEST_PATH/gtest/src/gtest-all.cc], [], [
+    mkdir -p "$GTEST_PATH";
+    (
+      cd $GTEST_PATH;
+      rm -rf gtest-$GTEST_VERSION.zip
+      wget http://googletest.googlecode.com/files/gtest-$GTEST_VERSION.zip;
+      unzip gtest-$GTEST_VERSION.zip;
+      rm gtest-$GTEST_VERSION.zip
+      rm -rf gtest/
+      mv gtest-$GTEST_VERSION/ gtest/
+    );
+  ])],
+  [test "x$with_gtest" == "xyes"], [
+    AC_CHECK_FILE([$GTEST_PATH/gtest/src/gtest-all.cc], [], [
+      AC_MSG_ERROR([could not find gtest source at path $GTEST_PATH.])
+    ])
+  ],
+  [test "x$with_gtest" == "xno"], [],
+  [AC_MSG_ERROR([invalid value $with_gtest for with_gtest.])]
+)
+AM_CONDITIONAL(with_gtest, test "x$with_gtest" != "xno")
+
 # Enable optional maintainer mode (off by default)
 dnl AM_MAINTAINER_MODE turns off automatic reconstruction of the build
 dnl files if the source build files have changed. A developer will want

@@ -34,6 +34,9 @@ pkgconfig_DATA = build/autotools/memtailor-$(MEMTAILOR_API_VERSION).pc
 # to include beyond those used in the build process.
 EXTRA_DIST = autogen.sh libs/gtest
 
+# set up tests to run on "make check"
+if with_gtest
+
 TESTS=unittest
 check_PROGRAMS=$(TESTS)
 
@@ -47,3 +50,11 @@ unittest_LDFLAGS = $(top_builddir)/libmemtailor-$(MEMTAILOR_API_VERSION).la
 unittest_SOURCES=src/test/ArenaTest.cpp src/test/BufferPoolTest.cpp	\
   src/test/MemoryBlocksTest.cpp src/test/testMain.cpp				\
   src/test/gtestInclude.cpp
+
+else
+
+check:
+	@echo
+	@echo "Configure did not locate gtest, so unittests cannot be run."
+
+endif
