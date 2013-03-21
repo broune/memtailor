@@ -17,11 +17,11 @@ libmemtailor_la_SOURCES =		\
   src/memtailor/MemoryBlocks.cpp
 
 # The headers that are installed.
-memtailorA_includedir = $(includedir)/memtailor
+memtailorA_includedir = $(includedir)
 memtailorA_include_HEADERS = src/memtailor.h
 # install remaining headers into a memtailor subdirectory of the include dir
 memtailorB_includedir = \
-  $(includedir)/memtailor/memtailor
+  $(includedir)/memtailor
 memtailorB_include_HEADERS = src/memtailor/stdinc.h			\
   src/memtailor/BufferPool.h src/memtailor/Arena.h			\
   src/memtailor/ArenaVector.h src/memtailor/MemoryBlocks.h

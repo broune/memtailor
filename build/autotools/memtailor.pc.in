@@ -9,4 +9,4 @@ URL: https://github.com/broune/memtailor
 Requires:
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lmemtailor
-Cflags: -I${includedir}/memtailor/
+Cflags: -I${includedir}
