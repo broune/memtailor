@@ -8,4 +8,11 @@
 #include "memtailor/ArenaVector.h"
 #include "memtailor/BufferPool.h"
 
+extern "C" {
+  // Put a C function in the library so that it can be detected by the autoconf
+  // macro AC_CHECK_LIB. That macro can only check for libraries that contain
+  // at least one C function.
+  void libmemtailorIsPresent(void); // This function does nothing.
+}
+
 #endif

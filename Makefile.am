@@ -14,7 +14,7 @@ AM_CXXFLAGS=-I$(top_srcdir)/src/ -std=gnu++0x
 # the sources that are built to make the library
 libmemtailor_la_SOURCES =		\
   src/memtailor/BufferPool.cpp src/memtailor/Arena.cpp	\
-  src/memtailor/MemoryBlocks.cpp
+  src/memtailor/MemoryBlocks.cpp src/memtailor.cpp
 
 # The headers that are installed.
 memtailorA_includedir = $(includedir)
